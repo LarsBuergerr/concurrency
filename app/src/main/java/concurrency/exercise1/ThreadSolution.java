@@ -69,26 +69,32 @@ public class ThreadSolution {
     }
 
     public static void main(String[] args) {
-        int[] numCores = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512};
+        int maxCores = 256;
         double workload = 1;
-        double[] fractions = {0.2, 0.4, 0.6, 0.8, 1.0};
+        double[] fractions = {0.5, 0.25, 0.1, 0.05};
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
         for (double fraction : fractions) {
-            double[] executionTimes = new double[numCores.length];
-            for (int i = 0; i < numCores.length; i++) {
-                executionTimes[i] = runSimulation(numCores[i], workload, fraction);
+            double[] executionTimes = new double[maxCores];
+            for (int i = 1; i < maxCores; i++) {
+                if (i > 64 && i % 2 == 1) {
+                    continue;
+                }
+                executionTimes[i] = runSimulation(i, workload, fraction);
             }
 
-            double baseTime = executionTimes[0];
-            for (int i = 0; i < numCores.length; i++) {
-                double speedup = ((baseTime / executionTimes[i]) - 1) * 100; // Convert to percentile speedup
-                dataset.addValue(speedup, "Fraction " + fraction, Integer.toString(numCores[i]));
+            double baseTime = workload;
+            for (int i = 1; i < maxCores; i++) {
+                if (i > 64 && i % 2 == 1) {
+                    continue;
+                }
+                double speedup = ((baseTime / executionTimes[i]));
+                dataset.addValue(speedup, "Fraction " + fraction, Integer.toString(i));
             }
         }
 
         JFreeChart chart = ChartFactory.createLineChart(
-                "Parallel Speedup vs. Number of Cores",
+                "Amdahls Law",
                 "Number of Cores",
                 "Speedup (%)",
                 dataset,
