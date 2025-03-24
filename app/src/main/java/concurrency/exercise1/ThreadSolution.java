@@ -12,6 +12,38 @@ import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 
+
+/**
+ * 
+ * Aufgabe 1
+ * 
+ * Assume 1% of the runtime of a program is not parallelizable. How much speed-up can
+ * be achieved by execution on 64 cores, assuming there is no additional overhead for the
+ * parallel execution?
+ * 
+ * S = 1 / (F + (1 - F) / P)
+ * => 1 / (0.01 + 0.99 / 64) == 39.26
+ * 
+ * 
+ * Aufgabe 2
+ * 
+ * This time, assume the program above uses a broadcast operation that incurs an overhead
+ * that depends on the number of used cores, P . This overhead is 0.0001 · P . For which
+ * number of cores do you get the highest speedup?
+ * 
+ * 
+ * 1 / (0.01 + 0.99 / P) + 0.0001 * P
+ * d/dP (1 / (0.01 + 0.99 / P) + 0.0001 * P) = 0
+ * 
+ * => -0.99 / P^2 + 0.0001 = 0
+ * => 0.0001 = 0.99 / P^2
+ * => P^2 = 0.99 / 0.0001
+ * => P = sqrt(0.99 / 0.0001) == 99.498743
+ */
+
+
+
+
 class Processor extends Thread {
     private int id;
     private double workload;
@@ -69,15 +101,15 @@ public class ThreadSolution {
     }
 
     public static void main(String[] args) {
-        int maxCores = 256;
-        double workload = 1;
+        int maxCores = 512;
+        double workload = 2;
         double[] fractions = {0.5, 0.25, 0.1, 0.05};
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
         for (double fraction : fractions) {
             double[] executionTimes = new double[maxCores];
             for (int i = 1; i < maxCores; i++) {
-                if (i > 64 && i % 2 == 1) {
+                if ((i > 32 && i % 2 == 1) || (i > 64 && i % 4 != 0) || (i > 128 && i % 8 != 0)) {
                     continue;
                 }
                 executionTimes[i] = runSimulation(i, workload, fraction);
@@ -85,7 +117,7 @@ public class ThreadSolution {
 
             double baseTime = workload;
             for (int i = 1; i < maxCores; i++) {
-                if (i > 64 && i % 2 == 1) {
+                if ((i > 32 && i % 2 == 1) || (i > 64 && i % 4 != 0) || (i > 128 && i % 8 != 0)) {
                     continue;
                 }
                 double speedup = ((baseTime / executionTimes[i]));
