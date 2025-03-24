@@ -1,6 +1,5 @@
-
+package concurrency.exercise1;
 import java.util.Date;
-
 
 
 public class SimpleSolution {

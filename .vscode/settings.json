@@ -1,0 +1,8 @@
+{
+  "java.project.sourcePaths": [
+    "exercise1/src",
+    "exercise1 copy/src",
+    "app/src/main/java/exercise1"
+  ],
+  "java.debug.settings.onBuildFailureProceed": true
+}
