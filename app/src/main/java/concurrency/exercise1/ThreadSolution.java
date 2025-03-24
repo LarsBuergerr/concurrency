@@ -15,15 +15,19 @@ import org.jfree.data.category.DefaultCategoryDataset;
 class Processor extends Thread {
     private int id;
     private double workload;
+    private boolean debug;
 
-    public Processor(int id, double workload) {
+    public Processor(int id, double workload, boolean debug) {
         this.id = id;
         this.workload = workload;
+        this.debug = debug;
     }
 
     public void run() {
         try {
+            if (debug) {
             System.out.println("Processor " + id + " working for " + workload + " seconds");
+            }
             Thread.sleep((long) (workload * 1000));
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -39,14 +43,14 @@ public class ThreadSolution {
 
         Date start = new Date();
         try {
-            System.out.println("Working on serializable part for " + serializableWorkload + " seconds");
+            // System.out.println("Working on serializable part for " + serializableWorkload + " seconds");
             Thread.sleep((long) (serializableWorkload * 1000));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
         for (int i = 0; i < numProcessors; i++) {
-            processors[i] = new Processor(i, parallelizableWorkload);
+            processors[i] = new Processor(i, parallelizableWorkload, false);
             processors[i].start();
         }
 
@@ -65,24 +69,22 @@ public class ThreadSolution {
     }
 
     public static void main(String[] args) {
-        int[] numCores = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
+        int[] numCores = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512};
         double workload = 1;
-        double fraction = 0.5;
-        double[] executionTimes = new double[numCores.length];
-
-        for (int i = 0; i < numCores.length; i++) {
-            executionTimes[i] = runSimulation(numCores[i], workload, fraction);
-        }
-
-        double[] speedup = new double[numCores.length];
-        double baseTime = executionTimes[0];
-        for (int i = 0; i < numCores.length; i++) {
-            speedup[i] = ((baseTime / executionTimes[i]) - 1) * 100; // Convert to percentile speedup
-        }
-
+        double[] fractions = {0.2, 0.4, 0.6, 0.8, 1.0};
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        for (int i = 0; i < numCores.length; i++) {
-            dataset.addValue(speedup[i], "Speedup (%)", Integer.toString(numCores[i]));
+
+        for (double fraction : fractions) {
+            double[] executionTimes = new double[numCores.length];
+            for (int i = 0; i < numCores.length; i++) {
+                executionTimes[i] = runSimulation(numCores[i], workload, fraction);
+            }
+
+            double baseTime = executionTimes[0];
+            for (int i = 0; i < numCores.length; i++) {
+                double speedup = ((baseTime / executionTimes[i]) - 1) * 100; // Convert to percentile speedup
+                dataset.addValue(speedup, "Fraction " + fraction, Integer.toString(numCores[i]));
+            }
         }
 
         JFreeChart chart = ChartFactory.createLineChart(
@@ -92,7 +94,9 @@ public class ThreadSolution {
                 dataset,
                 PlotOrientation.VERTICAL,
                 true, true, false);
-        
+
+
+
         CategoryPlot plot = (CategoryPlot) chart.getPlot();
         NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
         yAxis.setAutoRangeIncludesZero(true);
