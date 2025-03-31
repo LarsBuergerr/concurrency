@@ -8,7 +8,7 @@ public class Problem1 {
         ExecutorService executor= Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         Account a = new Account();
         try{
-            for (int i = 0; i < 10000; i++){
+            for (int i = 0; i < 1000000; i++){
                 executor.execute(new MyRunnable(a));
             }
         }catch(Exception err){

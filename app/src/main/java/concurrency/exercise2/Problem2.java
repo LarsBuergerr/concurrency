@@ -37,11 +37,19 @@ class Service implements Runnable {
     @Override
     public void run() {
         int lastNum = cache.lastNum;
+        // a small sleep here causes the cache to be invalidated very often
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // thread 3 overwrites cache
+
         Integer[] lastFactors = cache.lastFactors;
 
 
         // remove this code to not use the cache
-        if (request.content.equals(cache.lastNum)) {
+        if (request.content.equals(lastNum)) {
             System.out.println("Cache hit!");
             Response response = new Response(lastNum, lastFactors);
             System.out.println("The factors of " + response.num + " are: " + Arrays.toString(response.factors));

@@ -3,7 +3,9 @@ package concurrency.exercise2;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class Problem3 {
     public static void main(String[] args) {
@@ -31,7 +33,7 @@ public class Problem3 {
 class Chain {
     public final String BLOCK = "new block";
     public final int NUM_THREADS = Runtime.getRuntime().availableProcessors();
-    public final BigInteger TARGET = new BigInteger("00000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 16);
+    public final BigInteger TARGET = new BigInteger("0000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 16);
     public volatile boolean found = false;
     public volatile int winningNonce = -1;
     public volatile long executionTime = 0;
@@ -40,8 +42,7 @@ class Chain {
     public String toString() {
         return "=== Proof of Work ===\n" +
                "Winning Nonce: " + winningNonce + "\n" +
-               "Execution Time: " + executionTime + " ms\n" +
-               "Target: " + TARGET.toString(16);
+               "Execution Time: " + executionTime + " ms\n";
     }
 }
 
