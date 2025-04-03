@@ -5,17 +5,19 @@ import java.util.Date;
 public class Problem3 {
   
   public static void main(String[] args) throws InterruptedException {
-    int executionTimes = 100000;
+    int executionTimes = 10000000; // Number of times to execute the loop
 
     Synchronized synchronizedThread = new Synchronized(executionTimes);
     Unsynchronized unsynchronizedThread = new Unsynchronized(executionTimes);
 
+    System.out.println("Synchronized Test is running... ");
     Date startTimeSynchronized = new Date();
     synchronizedThread.start();
     synchronizedThread.join();
     Date endTimeSynchronized = new Date();
 
     
+    System.out.println("Unsynchronized Test is running... ");
     Date startTimeUnsynchronized = new Date();
     unsynchronizedThread.start();
     unsynchronizedThread.join();
@@ -44,9 +46,8 @@ class Synchronized extends Thread {
   @Override
   public void run() {
     synchronized (this) {
-      System.out.println("Thread " + Thread.currentThread().getName() + " is running: ");
       for (int i = 0; i < this.executionTimes; i++) {
-        System.out.println(i);
+        // System.out.println(i);
       }
     }
   }
@@ -62,9 +63,8 @@ class Unsynchronized extends Thread {
 
   @Override
   public void run() {
-    System.out.println("Thread " + Thread.currentThread().getName() + " is running: ");
     for (int i = 0; i < this.executionTimes; i++) {
-      System.out.println(i);
+      // System.out.println(i);
     }
   }
 
