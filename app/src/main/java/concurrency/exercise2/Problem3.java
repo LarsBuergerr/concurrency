@@ -33,7 +33,8 @@ public class Problem3 {
 class Chain {
     public final String BLOCK = "new block";
     public final int NUM_THREADS = Runtime.getRuntime().availableProcessors();
-    public final BigInteger TARGET = new BigInteger("0000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 16);
+    public final BigInteger TARGET = new BigInteger("0000000000000000000000000000001111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111", 2);
+    // 30 zeros followed by 1s in binaary (256 bits);
     public volatile boolean found = false;
     public volatile int winningNonce = -1;
     public volatile long executionTime = 0;
