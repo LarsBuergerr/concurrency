@@ -30,31 +30,19 @@ public class Problem5 {
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                System.out.println("Response 1: " + r1.num + " " + Arrays.toString(res1.factors));
-                if (!Arrays.equals(new int[]{7, 7}, res1.factors)) {
-                    System.out.println("Race condition! ");
+            });
+            executor.execute(() -> {
+                try {
+                    t2.service(r2, res2);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
             });
             executor.execute(() -> {
                 try {
-                    t2.service(r2, res1);
+                    t3.service(r3, res3);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
-                }
-                System.out.println("Response 2: " + r2.num + " " + Arrays.toString(res1.factors));
-                if (!Arrays.equals(new int[]{11, 11}, res1.factors)) {
-                    System.out.println("Race condition! ");
-                }
-            });
-            executor.execute(() -> {
-                try {
-                    t3.service(r3, res1);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                System.out.println("Response 3: " + r3.num + " " + Arrays.toString(res1.factors));
-                if (!Arrays.equals(new int[]{2,2,3,3}, res1.factors)) {
-                    System.out.println("Race condition! ");
                 }
             });
 
@@ -72,20 +60,37 @@ class Action {
         this.sharedMemory = sharedMemory;
     }
 
-    Response service(Request req, Response res) throws InterruptedException {
+    void service(Request req, Response res) throws InterruptedException {
+        Response response;
         int i = extractFromRequest(req);
-        Thread.sleep(10);
         SharedMemorySnapShot snapShot = sharedMemory.getSnapShot();
-            if (i == snapShot.lastNum) {
-                return encodeIntoResponse(res, snapShot.lastFactors);
-            } else {
-                int[] factors = factorsOf(i);
-                Thread.sleep(10);
-                snapShot.lastNum = i;
-                snapShot.lastFactors = factors;
-                return encodeIntoResponse(res, factors);
+
+        if (i == snapShot.lastNum) {
+            response = encodeIntoResponse(res, snapShot.lastFactors);
+        } else {
+            int[] factors = factorsOf(i);
+            sharedMemory.setCache(i, factors);
+            response = encodeIntoResponse(res, factors);
+        }
+        System.out.println("i: " + i);
+        System.out.println("Factors " + Arrays.toString(response.factors));
+
+        if(!this.validateFactors(i, response.factors)) {
+            System.out.println("Incorrect factorization detected! Number: " + i + " Computed Factors: " + Arrays.toString(response.factors));
+            System.exit(1);
+        } else {
+            System.out.println("The factors of " + i + " are: " + Arrays.toString(response.factors));
         }
     }
+
+    public boolean validateFactors(int number, int[] factors) {
+        int product = 1;
+        for (int factor : factors) {
+            product *= factor;
+        }
+        return product == number;
+    }
+
 
     private Response encodeIntoResponse(Response res, int[] factors) {
         res.factors = factors;
@@ -124,9 +129,13 @@ class SharedMemory {
 
     public synchronized SharedMemorySnapShot getSnapShot() throws InterruptedException {
         int[] lastFactors = this.lastFactors;
-        Thread.sleep(10);
         int lastNum = this.lastNum;
         return new SharedMemorySnapShot(lastNum, lastFactors);
+    }
+
+    public synchronized void setCache(int lastNum, int[] lastFactors) {
+        this.lastNum = lastNum;
+        this.lastFactors = lastFactors;
     }
 
     @Override
@@ -143,6 +152,4 @@ class SharedMemorySnapShot {
         this.lastFactors = lastFactors;
         this.lastNum = lastNum;
     }
-
-
 }

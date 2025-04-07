@@ -47,7 +47,6 @@ class Service implements Runnable {
 
         Integer[] lastFactors = cache.lastFactors;
 
-
         // remove this code to not use the cache
         if (request.content.equals(lastNum)) {
             System.out.println("Cache hit!");

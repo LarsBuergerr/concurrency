@@ -5,7 +5,7 @@ import java.util.Date;
 public class Problem3 {
   
   public static void main(String[] args) throws InterruptedException {
-    int executionTimes = 10000000; // Number of times to execute the loop
+    int executionTimes = 100000; // Number of times to execute the loop
 
     Synchronized synchronizedThread = new Synchronized(executionTimes);
     Unsynchronized unsynchronizedThread = new Unsynchronized(executionTimes);
