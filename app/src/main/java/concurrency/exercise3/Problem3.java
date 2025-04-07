@@ -45,11 +45,13 @@ class Synchronized extends Thread {
 
   @Override
   public void run() {
-    synchronized (this) {
-      for (int i = 0; i < this.executionTimes; i++) {
-        // System.out.println(i);
-      }
+    for (int i = 0; i < this.executionTimes; i++) {
+      testmethod(i);
     }
+  }
+
+  public synchronized void testmethod(int i) {      
+    System.out.println("Synchronized method called with value: " + i);
   }
 }
 
@@ -64,9 +66,11 @@ class Unsynchronized extends Thread {
   @Override
   public void run() {
     for (int i = 0; i < this.executionTimes; i++) {
-      // System.out.println(i);
+      testmethod(i);
     }
   }
 
-
+  public void testmethod(int i) {      
+    System.out.println("Synchronized method called with value: " + i);
+  }
 }

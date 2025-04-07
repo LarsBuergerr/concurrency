@@ -46,15 +46,11 @@ public class Problem3withPlot extends JFrame {
 
     public static void main(String[] args) throws InterruptedException {
         int[] executionTimesArray = {
-            10_000,
-            100_000,
-            500_000,
-            1_000_000,
-            2_000_000,
-            5_000_000,
-            10_000_000,
-            20_000_000,
-            30_000_000
+            10,
+            100,
+            1000,
+            10000,
+            100000,
         };
 
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
