@@ -1,9 +1,14 @@
 use rand::Rng;
 
+static mut LAST_NUMBER: u64 = 0;
+static mut LAST_FACTORS: [u64; 100] = [0; 100];
+
 fn main() {
+
+
     for i in 0..100000 {
         let mut rng = rand::rng();
-        let n = rng.random_range(1..1000);
+        let n = rng.random_range(1..20);
         
         let calculated_factors = service(n);
         print_result(calculated_factors, n);
@@ -18,13 +23,22 @@ fn service(n: u64) -> [u64; 100] {
     if n == 0 {
         return factors;
     }
-
-    factors = factorizer(factors, n);
-
+    unsafe {
+        if n == LAST_NUMBER {
+            println!("cache hit");
+            return LAST_FACTORS;
+        }
+    }
+    factorizer(& mut factors, n);
+    println!("cache miss");
+    unsafe {
+        LAST_NUMBER = n;
+        LAST_FACTORS = factors;
+    }
     return factors;
 }
 
-fn factorizer(mut factors: [u64; 100], mut n: u64) -> [u64; 100] {
+fn factorizer(factors: &mut [u64; 100], mut n: u64) {
     let mut i = 0;
     let upper_limit = (n as f64).sqrt() as u64 + 1;
     for j in 2..upper_limit {
@@ -38,8 +52,6 @@ fn factorizer(mut factors: [u64; 100], mut n: u64) -> [u64; 100] {
     if n > 1 {
         factors[i] = n;
     }
-
-    return factors;
 }
 
 fn print_result(factors: [u64; 100], n: u64) {
