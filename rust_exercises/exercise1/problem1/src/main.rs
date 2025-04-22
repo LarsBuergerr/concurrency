@@ -1,7 +1,7 @@
 use rand::Rng;
 
 fn main() {
-    for i in 0..100000 {
+    for i in 0..100_000 {
         let mut rng = rand::rng();
         let n = rng.random_range(1..1000);
         
@@ -14,17 +14,12 @@ fn main() {
 
 fn service(n: u64) -> [u64; 100] {
     let mut factors: [u64; 100] = [0; 100];
-
-    if n == 0 {
-        return factors;
-    }
-
-    factors = factorizer(factors, n);
+    factorizer(&mut factors, n);
 
     return factors;
 }
 
-fn factorizer(mut factors: [u64; 100], mut n: u64) -> [u64; 100] {
+fn factorizer(factors: &mut [u64; 100], mut n: u64){
     let mut i = 0;
     let upper_limit = (n as f64).sqrt() as u64 + 1;
     for j in 2..upper_limit {
@@ -34,12 +29,9 @@ fn factorizer(mut factors: [u64; 100], mut n: u64) -> [u64; 100] {
             n /= j;
         }
     }
-
     if n > 1 {
         factors[i] = n;
     }
-
-    return factors;
 }
 
 fn print_result(factors: [u64; 100], n: u64) {
