@@ -12,14 +12,14 @@ public class Problem1 {
 
     inserter.start();
 
-    Thread.sleep(Duration.ofSeconds(10));
+    Thread.sleep(Duration.ofSeconds(5));
 
     deleter.start();
 
-    Thread.sleep(Duration.ofSeconds(60));
+    Thread.sleep(Duration.ofSeconds(10));
 
     inserter.interrupt();
-    inserter.interrupt();
+    deleter.interrupt();
 
     System.out.println(list);
   }
@@ -39,14 +39,14 @@ class Inserter extends Thread {
   public void run() {
     try {
       int i = 1;
-      while(true) {
+      while (!Thread.currentThread().isInterrupted()) {
         list.insert(i);
         System.out.println(list.toString());
         i++;
         Thread.sleep(1000);
       }
     } catch (InterruptedException e) {
-      throw new RuntimeException(e);
+      Thread.currentThread().interrupt();
     } finally {
       System.out.println("Inserter interrupted!");
     }
@@ -66,19 +66,20 @@ class Deleter extends Thread {
   public void run() {
     try {
       int i = 1;
-      while(true) {
+      while (!Thread.currentThread().isInterrupted()) {
         list.delete(i);
         System.out.println(list.toString());
         i++;
         Thread.sleep(1000);
       }
     } catch (InterruptedException e) {
-      throw new RuntimeException(e);
+      Thread.currentThread().interrupt();
     } finally {
       System.out.println("Deleter interrupted!");
     }
   }
 }
+
 
 class AscendingLinkedList {
   private final Node head;
