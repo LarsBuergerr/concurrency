@@ -139,53 +139,63 @@ class AscendingLinkedList {
     Node prev = null;
     Node curr = head;
 
-    if (curr != null) curr.lock.lockInterruptibly();
-
     try {
-      while (curr != null && curr.value < value) {
-        if (prev != null) prev.lock.unlock();
-        prev = curr;
-        curr = curr.next;
-        if (curr != null) curr.lock.lockInterruptibly();
-      }
-
-      if (curr != null && curr.value == value) {
-        if (prev == null) {
-          head = curr.next; // delete head
-        } else {
-          prev.next = curr.next;
+      while (true) {
+        curr.lock.lockInterruptibly();
+        if (curr.value >= value) {
+          if (curr.value == value) {
+            if (prev == null) {
+              head = curr.next; // delete head
+            } else {
+              prev.next = curr.next;
+            }
+          }
+          break;
         }
-      }
-    } finally {
-      if (curr != null) curr.lock.unlock();
-      if (prev != null) prev.lock.unlock();
-    }
-  }
-
-  @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    Node current = head;
-    Node prev = null;
-
-    try {
-      if (current != null) current.lock.lockInterruptibly();
-      while (current != null) {
-        sb.append(current.value).append(" -> ");
-        Node next = current.next;
-        if (next != null) next.lock.lockInterruptibly();
-        if (prev != null) prev.lock.unlock();
-        prev = current;
-        current = next;
+        if (curr.next != null) {
+          if (prev != null) prev.lock.unlock();
+          prev = curr;
+          curr = curr.next;
+          continue;
+        } else {
+          // Value not found, nothing to delete
+          break;
+        }
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
+      if (prev != null) prev.lock.unlock();
+      if (curr != null) curr.lock.unlock();
+      throw e;
     } finally {
       if (prev != null) prev.lock.unlock();
+      if (curr != null) curr.lock.unlock();
     }
+}
 
-    sb.append("null");
-    return sb.toString();
+
+  @Override
+  public String toString() {
+      StringBuilder sb = new StringBuilder();
+      Node current = head;
+      Node prev = null;
+
+      try {
+        while (current != null) {
+          if (prev != null) prev.lock.unlock();
+          current.lock.lockInterruptibly();
+          sb.append(current.value).append(" -> ");
+          prev = current;
+          current = current.next;
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      } finally {
+        if (prev != null) prev.lock.unlock();
+      }
+
+      sb.append("null");
+      return sb.toString();
   }
 }
 
