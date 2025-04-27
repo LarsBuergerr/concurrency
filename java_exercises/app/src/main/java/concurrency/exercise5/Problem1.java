@@ -1,6 +1,7 @@
 package concurrency.exercise5;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Problem1 {
@@ -11,20 +12,19 @@ public class Problem1 {
     Deleter deleter = new Deleter("deleter", list);
 
     inserter.start();
-
     Thread.sleep(Duration.ofSeconds(5));
-
     deleter.start();
-
     Thread.sleep(Duration.ofSeconds(10));
 
     inserter.interrupt();
     deleter.interrupt();
 
+    inserter.join();
+    deleter.join();
+
     System.out.println(list);
   }
 }
-
 
 class Inserter extends Thread {
   String name;
@@ -80,69 +80,110 @@ class Deleter extends Thread {
   }
 }
 
-
 class AscendingLinkedList {
-  private final Node head;
+  private Node head;
 
   public AscendingLinkedList() {
-    head = new Node(Integer.MIN_VALUE);
-    head.next = new Node(Integer.MAX_VALUE);
+    this.head = null;
   }
 
-  public void insert(int value) {
-    Node prev = head;
-    prev.lock.lock();
-    Node curr = prev.next;
-    curr.lock.lock();
+  public void insert(int value) throws InterruptedException {
+    Node newNode = new Node(value);
+
+    if (head == null) {
+      head = newNode;
+      return;
+    }
+
+    Node prev = null;
+    Node curr = head;    
 
     try {
-      while (curr.value < value) {
-        prev.lock.unlock();
-        prev = curr;
-        curr = curr.next;
-        curr.lock.lock();
+    while (true) {
+        curr.lock.lockInterruptibly();
+        if (curr.value > value) {
+          if (prev == null) {
+            newNode.next = curr;
+            head = newNode;
+          } else {
+            prev.next = newNode;
+            newNode.next = curr;
+          }
+          break;
+        }
+        if (curr.next != null) {
+          if (prev != null) prev.lock.unlock();
+          prev = curr;
+          curr = curr.next;
+          continue;
+        } else {
+          curr.next = newNode;
+          break;
+        }
       }
-
-      Node newNode = new Node(value);
-      newNode.next = curr;
-      prev.next = newNode;
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      if (prev != null) prev.lock.unlock();
+      if (curr != null) curr.lock.unlock();
+      throw e;
     } finally {
-      curr.lock.unlock();
-      prev.lock.unlock();
+      if (prev != null) prev.lock.unlock();
+      if (curr != null) curr.lock.unlock();
     }
   }
+  
 
-  public void delete(int value) {
-    Node prev = head;
-    prev.lock.lock();
-    Node curr = prev.next;
-    curr.lock.lock();
+  public void delete(int value) throws InterruptedException {
+    if (head == null) return;
+
+    Node prev = null;
+    Node curr = head;
+
+    if (curr != null) curr.lock.lockInterruptibly();
 
     try {
-      while (curr.value < value) {
-        prev.lock.unlock();
+      while (curr != null && curr.value < value) {
+        if (prev != null) prev.lock.unlock();
         prev = curr;
         curr = curr.next;
-        curr.lock.lock();
+        if (curr != null) curr.lock.lockInterruptibly();
       }
 
-      if (curr.value == value) {
-        prev.next = curr.next;
+      if (curr != null && curr.value == value) {
+        if (prev == null) {
+          head = curr.next; // delete head
+        } else {
+          prev.next = curr.next;
+        }
       }
     } finally {
-      curr.lock.unlock();
-      prev.lock.unlock();
+      if (curr != null) curr.lock.unlock();
+      if (prev != null) prev.lock.unlock();
     }
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    Node current = head.next;
-    while (current.value != Integer.MAX_VALUE) {
-      sb.append(current.value).append(" -> ");
-      current = current.next;
+    Node current = head;
+    Node prev = null;
+
+    try {
+      if (current != null) current.lock.lockInterruptibly();
+      while (current != null) {
+        sb.append(current.value).append(" -> ");
+        Node next = current.next;
+        if (next != null) next.lock.lockInterruptibly();
+        if (prev != null) prev.lock.unlock();
+        prev = current;
+        current = next;
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    } finally {
+      if (prev != null) prev.lock.unlock();
     }
+
     sb.append("null");
     return sb.toString();
   }

@@ -6,7 +6,7 @@ static mut LAST_FACTORS: [u64; 100] = [0; 100];
 fn main() {
     for _ in 0..100_000 {
         let mut rng = rand::rng();
-        let n = rng.random_range(1..100_000);
+        let n = rng.random_range(1..20);
         
         let calculated_factors = service(n);
         print_result(calculated_factors, n);
