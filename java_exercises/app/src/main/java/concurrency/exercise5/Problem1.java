@@ -1,7 +1,6 @@
 package concurrency.exercise5;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Problem1 {
@@ -41,7 +40,8 @@ class Inserter extends Thread {
       int i = 1;
       while (!Thread.currentThread().isInterrupted()) {
         list.insert(i);
-        System.out.println(list.toString());
+
+        System.out.println("Inserting: " + i + " --- " + list.toString());
         i++;
         Thread.sleep(1000);
       }
@@ -68,7 +68,7 @@ class Deleter extends Thread {
       int i = 1;
       while (!Thread.currentThread().isInterrupted()) {
         list.delete(i);
-        System.out.println(list.toString());
+        System.out.println("Deleting: " + i + " --- " + list.toString());
         i++;
         Thread.sleep(1000);
       }
@@ -145,7 +145,7 @@ class AscendingLinkedList {
         if (curr.value >= value) {
           if (curr.value == value) {
             if (prev == null) {
-              head = curr.next; // delete head
+              head = curr.next;
             } else {
               prev.next = curr.next;
             }
@@ -158,7 +158,6 @@ class AscendingLinkedList {
           curr = curr.next;
           continue;
         } else {
-          // Value not found, nothing to delete
           break;
         }
       }
