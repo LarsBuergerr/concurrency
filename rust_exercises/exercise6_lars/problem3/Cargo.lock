@@ -42,7 +42,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "problem2"
+name = "problem3"
 version = "0.1.0"
 dependencies = [
  "rand",
