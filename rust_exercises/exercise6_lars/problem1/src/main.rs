@@ -1,10 +1,9 @@
-use std::sync::Arc;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 struct Account {
     balance: f64,
 }
-
 
 impl Account {
     fn new() -> Self {
@@ -12,50 +11,55 @@ impl Account {
     }
 
     fn deposit(&mut self, amount: f64) {
+        println!("Depositing {}", amount);
         self.balance += amount;
     }
 
-
     fn withdraw(&mut self, amount: f64) {
         if self.balance >= amount {
+            println!("Withdrawing {}", amount);
             self.balance -= amount;
         } else {
-            println!("Insufficient funds");
+            println!("Insufficient funds for withdrawal of {}", amount);
         }
     }
 }
 
+enum Action {
+    Deposit(f64),
+    Withdraw(f64),
+}
+
+fn execute(account: Arc<Mutex<Account>>, action: Action) {
+    let mut acc = account.lock().unwrap();
+    match action {
+        Action::Deposit(amount) => acc.deposit(amount),
+        Action::Withdraw(amount) => acc.withdraw(amount),
+    }
+}
 
 fn main() {
-    let account_actions = |account: &mut Account| {
-        println!("depositing 100.0");
-        account.deposit(100.0);
-        println!("withdrawing 50.0");
-        account.withdraw(50.0);
-        println!("withdrawing 100.0");
-        account.withdraw(100.0);
-        println!("depositing 1000.0");
-        account.deposit(1000.0);
-    };
-
-
     let account = Arc::new(Mutex::new(Account::new()));
+    let mut handles = vec![];
 
+    for i in 0..10 {
+        let account_clone = Arc::clone(&account);
+        let action = if i % 2 == 0 {
+            Action::Deposit(50.0)
+        } else {
+            Action::Withdraw(50.0)
+        };
 
-    let thread1 = std::thread::spawn({
-        let account = account.clone();
-        move || {
-            account_actions(&mut account.lock().unwrap());
-        }
-    });
-    let thread2 = std::thread::spawn({
-        let account = account.clone();
-        move || {
-            account_actions(&mut account.lock().unwrap());
-        }
-    });
-    thread1.join().unwrap();
-    thread2.join().unwrap();
+        let handle = thread::spawn(move || {
+            execute(account_clone, action);
+        });
+
+        handles.push(handle);
+    }
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+
     println!("Final balance: {}", account.lock().unwrap().balance);
-    println!("Thread 1 and Thread 2 have finished executing");
 }
