@@ -4,6 +4,8 @@ import java.util.Date;
 
 public class SimpleSolution {
     public static void main(String[] args) throws Exception {
+        System.out.println("Testetstsets");
+
 
         int workload = 10;     // 10 seconds workload
         

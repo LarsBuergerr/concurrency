@@ -42,7 +42,7 @@ fn main() {
     let account = Arc::new(Mutex::new(Account::new()));
     let mut handles = vec![];
 
-    for i in 0..10 {
+    for i in 0..10000 {
         let account_clone = Arc::clone(&account);
         let action = if i % 2 == 0 {
             Action::Deposit(50.0)
