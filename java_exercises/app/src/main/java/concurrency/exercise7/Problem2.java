@@ -1,9 +1,10 @@
 package concurrency.exercise7;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class Problem1 {
+public class Problem2 {
 
   public static void main(String[] args) throws InterruptedException {
     Executor66 executor = new Executor66(3);
@@ -68,7 +69,7 @@ class Executor66 {
   public void shutdown() {
     isShutdown = true;
     for (int i = 0; i < workers.length; i++) {
-      queue.offer(new PoisonPill());
+      queue.offer(new PoisonPill()); // send a termination signal
     }
   }
 }
@@ -83,7 +84,7 @@ class PoisonPill extends Task {
   }
 }
 
-class Task implements Runnable {
+class Task implements Runnable, Callable {
   final int id;
   final int timeToProcess;
 
@@ -102,5 +103,10 @@ class Task implements Runnable {
       Thread.currentThread().interrupt();
       System.out.printf("Thread %d was interrupted while processing Task %d%n", Thread.currentThread().threadId(), id);
     }
+  }
+
+  @Override
+  public Object call() {
+    return new Object();
   }
 }
