@@ -5,6 +5,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Problem1 {
   public static void main(String[] args) throws InterruptedException {
+
+    System.out.println("Starting Ascending Linked List with Concurrent Insertions and Deletions");
     AscendingLinkedList list = new AscendingLinkedList();
 
     Inserter inserter = new Inserter("inserter", list);

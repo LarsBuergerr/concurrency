@@ -1,0 +1,8 @@
+{
+  "java.compile.nullAnalysis.mode": "disabled",
+
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[java]": {
+    "editor.defaultFormatter": "redhat.java"
+  }
+}
