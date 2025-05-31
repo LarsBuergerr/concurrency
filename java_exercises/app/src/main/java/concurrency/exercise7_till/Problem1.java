@@ -1,73 +1,90 @@
 package concurrency.exercise7_till;
 
-import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Callable;
+import java.util.concurrent.LinkedBlockingQueue;
 
 
 public class Problem1 {
 
-    public static void main(String[] args) {
-        Runnable test = () -> {
-            System.out.println(Thread.currentThread().getName() + " basic task");
-            int i = 1;
-            for (int k = 0; k < 10_000; k++) {
-                i = i + k;
-            }
-            System.out.println(i + " final number");
-        };
-
-        Runnable calculatingTask = () -> {
-            System.out.println(Thread.currentThread().getName() + " calculating task");
-            double j = 23;
-            for (int i = 0; i < 100_000_000; i++) {
-                j = j * 2 / 2.4;
-            }
-            System.out.println(j);
-        };
-        MyExecutor executor = new MyExecutor(List.of(test, calculatingTask));
-
-        executor.runQueue();
-        executor.add(test);
-        executor.add(calculatingTask);
-
-        executor.runQueue();
-
-        executor.addMultiple(List.of(test, calculatingTask, test, calculatingTask));
-        executor.runQueue();
-        executor.finishTasks();
+    public static void main(String[] args) throws InterruptedException {
+        MyExecutor executor = new MyExecutor(4,
+                List.of(
+                new TaskProblem1(1),
+                new TaskProblem1(2),
+                new TaskProblem1(3),
+                new TaskProblem1(4),
+                new TaskProblem1(5)
+                )
+        );
+        Thread.sleep(5000);
+        executor.shutDown();
     }
 }
 
 class MyExecutor {
+    private final Queue<Runnable> queue;
+    private final List<Thread> workers;
+    private boolean done = false;
 
-    private static final int THREAD_NUMBER = 4;
-    private final ExecutorService exec;
-    Queue<Runnable> taskQueue;
 
-    public MyExecutor(List<Runnable> tasks) {
-        this.exec = Executors.newFixedThreadPool(THREAD_NUMBER);
-        this.taskQueue = new ArrayDeque<>(tasks);
-    }
-
-    public void runQueue() {
-        while (!taskQueue.isEmpty()) {
-            Runnable task = taskQueue.poll();
-            exec.execute(task);
+    public MyExecutor(int num_threads, List<TaskProblem1> tasks) {
+        queue = new LinkedBlockingQueue<>();
+        workers = new ArrayList<>();
+        queue.addAll(tasks);
+        for (int i = 0; i < num_threads; i++) {
+            workers.add(new Thread(new Worker()));
+            workers.get(i).start();
         }
     }
 
-    public void addMultiple(List<Runnable> tasks) {
-        taskQueue.addAll(tasks);
+    public void execute(Runnable task) {
+        queue.add(task);
+        //queue.offer(task);
     }
 
-    public void add(Runnable r) {
-        this.taskQueue.add(r);
+    public void shutDown() {
+        System.out.println("Shutting down " + queue.size());
+        done = true;
+        for (Thread worker : workers) {
+            worker.interrupt();
+        }
     }
 
-    public void finishTasks() {
-        exec.shutdown();
+    private class Worker implements Runnable {
+
+        @Override
+        public void run() {
+            while (!done) {
+                Runnable task = queue.poll();
+                if (task != null) {
+                    task.run();
+                }
+            }
+        }
     }
 }
+
+class TaskProblem1 implements Runnable, Callable<Object> {
+
+    private final int id;
+
+    public TaskProblem1(int id) {
+        this.id = id;
+    }
+
+    @Override
+    public void run() {
+        System.out.println(Thread.currentThread().getName());
+        System.out.println(id);
+    }
+
+    @Override
+    public Object call() throws Exception {
+        return new Object();
+    }
+}
+
+
