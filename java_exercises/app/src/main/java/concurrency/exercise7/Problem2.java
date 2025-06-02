@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Problem2 {
 
   public static void main(String[] args) throws Exception {
-    Executor executor = new Executor(3);
+    Executor2 executor = new Executor2(10);
     MyCompletionService<Integer> completionService = new MyCompletionService<>(executor);
 
     for (int i = 0; i < 10; i++) {
@@ -19,7 +19,7 @@ public class Problem2 {
       completionService.submit(() -> {
         System.out.printf("Callable Task %d is running for %d seconds%n", taskId, duration);
         Thread.sleep(duration * 1000);
-        return taskId * 2;
+        return duration * 2;
       });
     }
 
@@ -33,12 +33,12 @@ public class Problem2 {
 }
 
 // --------------------- EXECUTOR ---------------------
-class Executor {
+class Executor2 {
   private final BlockingQueue<Runnable> queue;
   private final Thread[] workers;
   private final AtomicBoolean isShutdown = new AtomicBoolean(false);
 
-  public Executor(int poolSize) {
+  public Executor2(int poolSize) {
     this.queue = new LinkedBlockingQueue<>();
     this.workers = new Thread[poolSize];
 
@@ -82,13 +82,12 @@ class Executor {
 
   public void shutdown() {
     isShutdown.set(true);
-    for (int i = 0; i < workers.length; i++) {
+    for (Thread worker : workers) {
       queue.offer(new PoisonPillRunnable());
     }
   }
 }
 
-// Poison pill to stop workers
 class PoisonPillRunnable implements Runnable {
   @Override
   public void run() {
@@ -97,10 +96,10 @@ class PoisonPillRunnable implements Runnable {
 
 // --------------------- COMPLETION SERVICE ---------------------
 class MyCompletionService<T> {
-  private final Executor executor;
+  private final Executor2 executor;
   private final BlockingQueue<Future<T>> completionQueue = new LinkedBlockingQueue<>();
 
-  public MyCompletionService(Executor executor) {
+  public MyCompletionService(Executor2 executor) {
     this.executor = executor;
   }
 
