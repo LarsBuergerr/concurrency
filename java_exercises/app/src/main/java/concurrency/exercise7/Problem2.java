@@ -2,111 +2,134 @@ package concurrency.exercise7;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Problem2 {
 
-  public static void main(String[] args) throws InterruptedException {
-    Executor66 executor = new Executor66(3);
+  public static void main(String[] args) throws Exception {
+    Executor executor = new Executor(3);
+    MyCompletionService<Integer> completionService = new MyCompletionService<>(executor);
 
     for (int i = 0; i < 10; i++) {
-
-      int randomTimetoProcess = (int) (Math.random() * 10 + 1);
-      Task task = new Task(i, randomTimetoProcess);
-      executor.execute(task);
+      final int taskId = i;
+      int duration = (int) (Math.random() * 10 + 1);
+      completionService.submit(() -> {
+        System.out.printf("Callable Task %d is running for %d seconds%n", taskId, duration);
+        Thread.sleep(duration * 1000);
+        return taskId * 2;
+      });
     }
 
-    Thread.sleep(20000);
-    System.out.println("Shutting down executor...");
+    for (int i = 0; i < 10; i++) {
+      Future<Integer> future = completionService.take();
+      System.out.println("Result received: " + future.get());
+    }
+
     executor.shutdown();
   }
 }
 
-class Executor66 {
-
-  private final BlockingQueue<Task> queue;
+// --------------------- EXECUTOR ---------------------
+class Executor {
+  private final BlockingQueue<Runnable> queue;
   private final Thread[] workers;
-  private volatile boolean isShutdown = false;
+  private final AtomicBoolean isShutdown = new AtomicBoolean(false);
 
-  public Executor66(int poolSize) {
-    this.queue = new LinkedBlockingQueue<Task>();
+  public Executor(int poolSize) {
+    this.queue = new LinkedBlockingQueue<>();
     this.workers = new Thread[poolSize];
 
-    for (Thread worker : workers) {
-      worker = new Thread(() -> {
-        while (true) {
-          try {
-            Task task = queue.take();
-            if (task instanceof PoisonPill) {
+    for (int i = 0; i < poolSize; i++) {
+      workers[i] = new Thread(() -> {
+        try {
+          while (true) {
+            Runnable task = queue.take();
+            if (task instanceof PoisonPillRunnable) {
               System.out.printf("Thread %d received poison pill, shutting down%n", Thread.currentThread().threadId());
               break;
             }
             task.run();
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            break;
           }
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
         }
       });
-      worker.start();
+      workers[i].start();
     }
   }
 
-  public void execute(Task task) {
-    if (isShutdown) {
+  public void execute(Runnable task) {
+    if (isShutdown.get()) {
       throw new IllegalStateException("Executor is shutdown, cannot accept new tasks");
     }
 
     try {
-      System.out.printf("Adding task %d to the queue%n", task.id);
       queue.put(task);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new RuntimeException("Failed to add task to the queue", e);
+      throw new RuntimeException("Failed to add task to queue", e);
     }
+  }
+
+  public <T> Future<T> submit(Callable<T> callable) {
+    FutureTask<T> futureTask = new FutureTask<>(callable);
+    execute(futureTask);
+    return futureTask;
   }
 
   public void shutdown() {
-    isShutdown = true;
+    isShutdown.set(true);
     for (int i = 0; i < workers.length; i++) {
-      queue.offer(new PoisonPill()); // send a termination signal
+      queue.offer(new PoisonPillRunnable());
     }
   }
 }
 
-class PoisonPill extends Task {
-  public PoisonPill() {
-    super(-1, 0);
-  }
-
+// Poison pill to stop workers
+class PoisonPillRunnable implements Runnable {
   @Override
   public void run() {
   }
 }
 
-class Task implements Runnable, Callable {
-  final int id;
-  final int timeToProcess;
+// --------------------- COMPLETION SERVICE ---------------------
+class MyCompletionService<T> {
+  private final Executor executor;
+  private final BlockingQueue<Future<T>> completionQueue = new LinkedBlockingQueue<>();
 
-  public Task(int id, int timeToProcess) {
-    this.id = id;
-    this.timeToProcess = timeToProcess;
+  public MyCompletionService(Executor executor) {
+    this.executor = executor;
+  }
+
+  public Future<T> submit(Callable<T> task) {
+    CompletionTask<T> completionTask = new CompletionTask<>(task, completionQueue);
+    executor.execute(completionTask);
+    return completionTask;
+  }
+
+  public Future<T> take() throws InterruptedException {
+    return completionQueue.take();
+  }
+
+  public Future<T> poll() {
+    return completionQueue.poll();
+  }
+}
+
+// Wraps a Callable and puts its Future in the completion queue when done
+class CompletionTask<T> extends FutureTask<T> {
+  private final BlockingQueue<Future<T>> completionQueue;
+
+  public CompletionTask(Callable<T> callable, BlockingQueue<Future<T>> completionQueue) {
+    super(callable);
+    this.completionQueue = completionQueue;
   }
 
   @Override
-  public void run() {
-    try {
-      System.out.printf("Thread %d is processing Task %d for %d seconds%n", Thread.currentThread().threadId(), id,
-          timeToProcess);
-      Thread.sleep(timeToProcess * 1000);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      System.out.printf("Thread %d was interrupted while processing Task %d%n", Thread.currentThread().threadId(), id);
-    }
-  }
-
-  @Override
-  public Object call() {
-    return new Object();
+  protected void done() {
+    completionQueue.add(this);
   }
 }
