@@ -25,6 +25,9 @@ public class Problem2 {
       Integer result = future.get();
       System.out.println("Result received: " + result);
     }
+
+    System.out.println("Shutting down executor...");
+    executor.shutdown();
   }
 }
 
