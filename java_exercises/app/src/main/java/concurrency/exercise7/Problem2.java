@@ -11,6 +11,27 @@ public class Problem2 {
 
   public static void main(String[] args) throws Exception {
     Executor2 executor = new Executor2(10);
+
+    for (int i = 0; i < 10; i++) {
+      final int taskId = i;
+      int duration = (int) (Math.random() * 10 + 1);
+
+      Future<Integer> future = executor.submit(() -> {
+        System.out.printf("Callable Task %d is running for %d seconds%n", taskId, duration);
+        Thread.sleep(duration * 1000);
+        return duration * 2;
+      });
+
+      Integer result = future.get();
+      System.out.println("Result received: " + result);
+    }
+  }
+}
+
+class Problem3 {
+
+  public static void main(String[] args) throws Exception {
+    Executor2 executor = new Executor2(10);
     MyCompletionService<Integer> completionService = new MyCompletionService<>(executor);
 
     for (int i = 0; i < 10; i++) {
